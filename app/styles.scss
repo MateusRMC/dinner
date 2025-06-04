@@ -1,0 +1,33 @@
+$bg : #202020;
+$bg2: #505050;
+$color: white;
+
+*{
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  display: grid;
+  grid-template-rows: 70vh 30vh;
+  width: 100vw;
+  color: $color;
+}
+
+.panel{
+  display: flex;
+  padding: 20px;
+  background-color: $bg;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
+
+.controls{
+  display: flex;
+  padding: 20px;
+  background-color: $bg2;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+}
