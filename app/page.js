@@ -6,6 +6,8 @@ import { supabase } from "../lib/supabase";
 export default function Homepage() {
   const [guestName, setGuestName] = useState("");
   const [guestList, setGuestList] = useState([]);
+  const [guestStatus, setGuestStatus] = useState("Still picking");
+  const [loggedGuest, setLoggedGuest] = useState("");
 
   async function fetchGuest() {
     //isso aqui é a consulta ao banco de dados em si
@@ -21,7 +23,7 @@ export default function Homepage() {
     }
   }
 
-  async function InsertGuest(e) {
+  async function insertGuest(e) {
     e.preventDefault();
 
     const { data, error } = await supabase
@@ -31,6 +33,10 @@ export default function Homepage() {
     if (error) {
       console.error("não inseriu porque:", error);
     } else {
+      localStorage.setItem("guestName", guestName);
+
+      setLoggedGuest(localStorage.getItem("guestName"));
+
       setGuestName("");
     }
   }
@@ -38,7 +44,7 @@ export default function Homepage() {
   useEffect(() => {
     fetchGuest();
 
-    const channel = supabase // isso aqui é a ativação do realtime pra aquela consulta lá em cima ser em tempo real (e não uma consulta em si)
+    const channel = supabase
       .channel("realtime_guests")
       .on(
         "postgres_changes",
@@ -60,23 +66,35 @@ export default function Homepage() {
         }
       )
       .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
     <div className="container">
       <div className="panel">
+        <h2 className="panel-title">
+          {guestList.length > 0
+            ? "🍽️ Guests at your table"
+            : "This table has no guests yet"}
+        </h2>
         {guestList.map((guest) => (
-          <h1 key={guest.id}>{guest.name}</h1>
+          <div key={guest.id} className="guestDiv">
+            <p className="guestName">{guest.name}</p>
+            <span className="guestStatus">{guestStatus}</span>
+          </div>
         ))}
       </div>
-      <form onSubmit={InsertGuest} className="controls">
+      <form onSubmit={insertGuest} className="controls">
         <input
           type="text"
           onChange={(e) => setGuestName(e.target.value)}
           placeholder="What's your name?"
           value={guestName}
         />
-        <button type="submit">join dinner</button>
+        <button type="submit">Join dinner</button>
       </form>
     </div>
   );
