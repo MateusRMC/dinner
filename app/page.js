@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import GuestForm from "./components/GuestForm";
+import OrderForm from "./components/OrderForm";
 
 export default function Homepage() {
   const [guestName, setGuestName] = useState("");
   const [guestList, setGuestList] = useState([]);
   const [guestStatus, setGuestStatus] = useState("Still picking");
   const [loggedGuest, setLoggedGuest] = useState("");
+  const [menuList, setMenuList] = useState([]);
+
+  useEffect(() => {
+    !loggedGuest && setLoggedGuest(localStorage.getItem("guestName"));
+  });
 
   async function fetchGuest() {
     //isso aqui é a consulta ao banco de dados em si
@@ -41,8 +48,29 @@ export default function Homepage() {
     }
   }
 
+  async function fetchMenu() {
+    const { data, error } = await supabase
+      .from("menu")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("erro no menu: ", error);
+    } else {
+      setMenuList(data);
+    }
+  }
+
+  async function insertOrder(e) {
+    e.preventDefault();
+
+    // cenas para os próximos capitulos - const {data, error} = await supabase.from("orders").insert{[ ""]}
+  }
+
   useEffect(() => {
     fetchGuest();
+
+    fetchMenu();
 
     const channel = supabase
       .channel("realtime_guests")
@@ -78,7 +106,7 @@ export default function Homepage() {
         <h2 className="panel-title">
           {guestList.length > 0
             ? "🍽️ Guests at your table"
-            : "This table has no guests yet"}
+            : "No guests at your table"}
         </h2>
         {guestList.map((guest) => (
           <div key={guest.id} className="guestDiv">
@@ -87,15 +115,19 @@ export default function Homepage() {
           </div>
         ))}
       </div>
-      <form onSubmit={insertGuest} className="controls">
-        <input
-          type="text"
-          onChange={(e) => setGuestName(e.target.value)}
-          placeholder="What's your name?"
-          value={guestName}
+      {loggedGuest ? (
+        <OrderForm
+          menuList={menuList}
+          insertOrder={insertOrder}
+          fetchMenu={fetchMenu}
         />
-        <button type="submit">Join dinner</button>
-      </form>
+      ) : (
+        <GuestForm
+          guestName={guestName}
+          setGuestName={setGuestName}
+          insertGuest={insertGuest}
+        />
+      )}
     </div>
   );
 }

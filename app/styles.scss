@@ -14,7 +14,7 @@ $lg: 3.375rem;
 
 .container {
   display: grid;
-  grid-template-rows: 60vh 40vh;
+  grid-template-rows: 50vh 50vh;
   justify-content: center;
   width: 100vw;
   background-color: $bg;
@@ -85,6 +85,26 @@ input[type="text"]{
   color: $text;
 }
 
+.dishOptions{
+  display: inline-flex;
+  font-size: $sm;
+  min-width: 100%;
+  padding: 10px 0px;
+  background-color: $bg3;
+  border: 1px solid $bg2;
+  text-align: left;
+  justify-content: space-between;
+
+  span,input[type="radio"]{
+    margin: 10px;
+  }
+
+}
+
+.dishOptions:last-child{
+    margin-bottom: 10px;
+}
+
 button{
 
   padding: $sm;
@@ -92,10 +112,11 @@ button{
   border-radius: 10px;
   border: none;
   cursor: pointer;
+  background-color: white;
 }
 
 button:hover{
-  background-color: $bg2;
+  background-color: $bg3;
   color: $text;
 }
 
