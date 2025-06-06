@@ -9,7 +9,7 @@ const [dishOption, setDishOption] = useState("");
   return (
     <form onSubmit={insertOrder} className="controls">
         {menuList.map((dish) => (
-          <label key={dish.id} className='dishOptions'><span>{dish.name}</span><input type="radio" name={dish.id} /></label>
+          <label key={dish.id} className='dishOptions'><span>{dish.name}</span><input type="radio" name="pickedDish" /></label>
         ))}
         <br />
       <button type="submit">Pedir</button>
