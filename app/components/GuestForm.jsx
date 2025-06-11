@@ -10,7 +10,7 @@ export default function GuestForm({insertGuest, setGuestName, guestName}) {
           value={guestName}
           required
         />
-        <button type="submit">Join dinner</button>
+        <button className='join' type="submit">Join dinner</button>
       </form>
   )
 }

@@ -105,7 +105,17 @@ input[type="text"]{
     margin-bottom: 10px;
 }
 
-button{
+.logOut {
+  border: none;
+  background: none;
+  color: $bg2;
+  font-size: $sm;
+  margin-top: $sm;
+  cursor: pointer;
+}
+
+
+.join, .order{
 
   padding: $sm;
   font-size: $sm;
@@ -113,9 +123,15 @@ button{
   border: none;
   cursor: pointer;
   background-color: white;
+  color: $bg;
 }
 
-button:hover{
+.join:hover{
+  background-color: $bg3;
+  color: $text;
+}
+
+.order:hover{
   background-color: $bg3;
   color: $text;
 }

@@ -9,11 +9,12 @@ export default function Homepage() {
   const [guestName, setGuestName] = useState("");
   const [guestList, setGuestList] = useState([]);
   const [guestStatus, setGuestStatus] = useState("Still picking");
-  const [loggedGuest, setLoggedGuest] = useState("");
+  const [loggedGuestName, setLoggedGuestName] = useState("");
+  const [loggedGuestId, setLoggedGuestId] = useState("");
   const [menuList, setMenuList] = useState([]);
 
   useEffect(() => {
-    !loggedGuest && setLoggedGuest(localStorage.getItem("guestName"));
+    !loggedGuestId && setLoggedGuestId(localStorage.getItem("guestId"));
   });
 
   async function fetchGuest() {
@@ -35,17 +36,39 @@ export default function Homepage() {
 
     const { data, error } = await supabase
       .from("guests")
-      .insert([{ name: guestName }]);
+      .insert([{ name: guestName }])
+      .select();
 
     if (error) {
       console.error("não inseriu porque:", error);
-    } else {
-      localStorage.setItem("guestName", guestName);
+    } else if (data && data.length > 0) {
+      const guest = data[0];
 
-      setLoggedGuest(localStorage.getItem("guestName"));
+      localStorage.setItem("guestId", guest.id); // armazena o ID
+      localStorage.setItem("guestName", guest.name); // armazena o nome, se quiser manter
+
+      setLoggedGuestName(guest.name);
+      setLoggedGuestId(guest.id);
 
       setGuestName("");
     }
+  }
+
+  async function logOutGuest() {
+    const { data, error } = await supabase
+      .from("guests")
+      .delete()
+      .eq("id", loggedGuestId);
+
+    if (error) {
+      return;
+    }
+
+    localStorage.removeItem("guestId");
+    localStorage.removeItem("guestName");
+
+    setLoggedGuestId("");
+    setLoggedGuestName("");
   }
 
   async function fetchMenu() {
@@ -110,16 +133,21 @@ export default function Homepage() {
         </h2>
         {guestList.map((guest) => (
           <div key={guest.id} className="guestDiv">
-            <p className="guestName">{guest.name}</p>
+            <p className="guestName">
+              {guest.name}
+              {guest.id == localStorage.getItem("guestId") && " (You)"}
+            </p>
             <span className="guestStatus">{guestStatus}</span>
           </div>
         ))}
       </div>
-      {loggedGuest ? (
+      {loggedGuestId ? (
         <OrderForm
           menuList={menuList}
           insertOrder={insertOrder}
           fetchMenu={fetchMenu}
+          logOutGuest={logOutGuest}
+          loggedGuestId={loggedGuestId}
         />
       ) : (
         <GuestForm
