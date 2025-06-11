@@ -8,17 +8,18 @@ import OrderForm from "./components/OrderForm";
 export default function Homepage() {
   const [guestName, setGuestName] = useState("");
   const [guestList, setGuestList] = useState([]);
-  const [guestStatus, setGuestStatus] = useState("Still picking");
+  const [guestStatus, setGuestStatus] = useState({});
   const [loggedGuestName, setLoggedGuestName] = useState("");
   const [loggedGuestId, setLoggedGuestId] = useState("");
   const [menuList, setMenuList] = useState([]);
 
   useEffect(() => {
-    !loggedGuestId && setLoggedGuestId(localStorage.getItem("guestId"));
-  });
+    if (!loggedGuestId) {
+      setLoggedGuestId(localStorage.getItem("guestId"));
+    }
+  }, [loggedGuestId]);
 
   async function fetchGuest() {
-    //isso aqui é a consulta ao banco de dados em si
     const { data, error } = await supabase
       .from("guests")
       .select("*")
@@ -28,6 +29,26 @@ export default function Homepage() {
       console.error("Deu ruim:", error);
     } else {
       setGuestList(data);
+    }
+  }
+
+  async function fetchOrder() {
+    const { data, error } = await supabase
+      .from("orders")
+      .select("id, guest_id, dish_id, menu(name)")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar pedidos:", error);
+      return;
+    }
+
+    if (data) {
+      const statusMap = {};
+      data.forEach((order) => {
+        statusMap[order.guest_id] = order.menu?.name || "Still picking";
+      });
+      setGuestStatus(statusMap);
     }
   }
 
@@ -44,18 +65,17 @@ export default function Homepage() {
     } else if (data && data.length > 0) {
       const guest = data[0];
 
-      localStorage.setItem("guestId", guest.id); // armazena o ID
-      localStorage.setItem("guestName", guest.name); // armazena o nome, se quiser manter
+      localStorage.setItem("guestId", guest.id);
+      localStorage.setItem("guestName", guest.name);
 
       setLoggedGuestName(guest.name);
       setLoggedGuestId(guest.id);
-
       setGuestName("");
     }
   }
 
   async function logOutGuest() {
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("guests")
       .delete()
       .eq("id", loggedGuestId);
@@ -84,18 +104,22 @@ export default function Homepage() {
     }
   }
 
-  async function insertOrder(e) {
-    e.preventDefault();
+  async function insertOrder(pickedDish) {
+    const { error } = await supabase
+      .from("orders")
+      .insert([{ guest_id: loggedGuestId, dish_id: pickedDish }]);
 
-    // cenas para os próximos capitulos - const {data, error} = await supabase.from("orders").insert{[ ""]}
+    if (error) {
+      console.error(error);
+    }
   }
 
   useEffect(() => {
     fetchGuest();
-
     fetchMenu();
+    fetchOrder();
 
-    const channel = supabase
+    const guestChannel = supabase
       .channel("realtime_guests")
       .on(
         "postgres_changes",
@@ -118,10 +142,32 @@ export default function Homepage() {
       )
       .subscribe();
 
+    const orderChannel = supabase
+      .channel("realtime_orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+        },
+        () => {
+          fetchOrder();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(guestChannel);
+      supabase.removeChannel(orderChannel);
     };
   }, []);
+
+  useEffect(() => {
+    if (loggedGuestId) {
+      fetchOrder();
+    }
+  }, [loggedGuestId]);
 
   return (
     <div className="container">
@@ -137,7 +183,9 @@ export default function Homepage() {
               {guest.name}
               {guest.id == localStorage.getItem("guestId") && " (You)"}
             </p>
-            <span className="guestStatus">{guestStatus}</span>
+            <span className="guestStatus">
+              {guestStatus[guest.id] || "Still picking"}
+            </span>
           </div>
         ))}
       </div>
