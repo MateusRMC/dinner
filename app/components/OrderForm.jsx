@@ -21,7 +21,7 @@ function handleSubmit(e){
         <br />
       <button className="order" type="submit">Order</button>
       {loggedGuestId && (
-        <button className="logOut" onClick={logOutGuest}>
+        <button type="button" className="logOut" onClick={logOutGuest}>
           Leave table
         </button>)}
     </form>

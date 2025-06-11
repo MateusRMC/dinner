@@ -75,7 +75,7 @@ export default function Homepage() {
   }
 
   async function logOutGuest() {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("guests")
       .delete()
       .eq("id", loggedGuestId);
@@ -83,6 +83,8 @@ export default function Homepage() {
     if (error) {
       return;
     }
+
+    console.log("usuário removido");
 
     localStorage.removeItem("guestId");
     localStorage.removeItem("guestName");
@@ -105,9 +107,10 @@ export default function Homepage() {
   }
 
   async function insertOrder(pickedDish) {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
-      .insert([{ guest_id: loggedGuestId, dish_id: pickedDish }]);
+      .insert([{ guest_id: loggedGuestId, dish_id: pickedDish }])
+      .select();
 
     if (error) {
       console.error(error);
@@ -163,20 +166,14 @@ export default function Homepage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (loggedGuestId) {
-      fetchOrder();
-    }
-  }, [loggedGuestId]);
-
   return (
     <div className="container">
       <div className="panel">
-        <h2 className="panel-title">
+        <p className="panel-title">
           {guestList.length > 0
             ? "🍽️ Guests at your table"
             : "No guests at your table"}
-        </h2>
+        </p>
         {guestList.map((guest) => (
           <div key={guest.id} className="guestDiv">
             <p className="guestName">
