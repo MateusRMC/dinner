@@ -8,12 +8,14 @@ import OrderForm from "./components/OrderForm";
 export default function Homepage() {
   const [guestName, setGuestName] = useState("");
   const [guestList, setGuestList] = useState([]);
-  const [guestStatus, setGuestStatus] = useState({});
+  const [orderName, setOrderName] = useState({});
+  const [orderStatus, setOrderStatus] = useState({});
   const [loggedGuestName, setLoggedGuestName] = useState("");
   const [loggedGuestId, setLoggedGuestId] = useState("");
   const [menuList, setMenuList] = useState([]);
 
   useEffect(() => {
+    //verificação de usuário logado antes de qualquer coisa
     if (!loggedGuestId) {
       setLoggedGuestId(localStorage.getItem("guestId"));
     }
@@ -35,7 +37,7 @@ export default function Homepage() {
   async function fetchOrder() {
     const { data, error } = await supabase
       .from("orders")
-      .select("id, guest_id, dish_id, menu(name)")
+      .select("id, guest_id, dish_id, menu(name), order_status")
       .order("created_at", { ascending: true });
 
     if (error) {
@@ -44,11 +46,21 @@ export default function Homepage() {
     }
 
     if (data) {
-      const statusMap = {};
+      //pegando nome dos pedidos de cada guest
+      const orderNameMap = {};
       data.forEach((order) => {
-        statusMap[order.guest_id] = order.menu?.name || "Still picking";
+        orderNameMap[order.guest_id] = order.menu?.name;
       });
-      setGuestStatus(statusMap);
+      setOrderName(orderNameMap);
+    }
+
+    if (data) {
+      //pegando o status do pedido de cada guest
+      const orderStatusMap = {};
+      data.forEach((order) => {
+        orderStatusMap[order.guest_id] = order.order_status;
+      });
+      setOrderStatus(orderStatusMap);
     }
   }
 
@@ -180,9 +192,10 @@ export default function Homepage() {
               {guest.name}
               {guest.id == localStorage.getItem("guestId") && " (You)"}
             </p>
-            <span className="guestStatus">
-              {guestStatus[guest.id] || "Still picking"}
+            <span className="orderName">
+              {orderName[guest.id] || "Still picking"}
             </span>
+            <span className="orderStatus">{orderStatus[guest.id] || ""}</span>
           </div>
         ))}
       </div>
